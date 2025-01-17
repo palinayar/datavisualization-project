@@ -42,7 +42,10 @@ function createDonutChart(containerId, sentimentData) {
         .style("text-anchor", "middle")
         .style("font-size", "12px")
         .style("fill", "white")
-        .text(d => `${Math.round(d.data.value * 100)}%`);
+        .text(d => {
+            const percentage = Math.round(d.data.value * 100);
+            return percentage > 0 ? `${percentage}%` : ""; // Show text only if percentage > 0
+        });
 
     // Add legend to the right of the chart
      const legend = d3.select(containerId)

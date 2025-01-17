@@ -44,7 +44,7 @@ const dragYAxis = d3.drag()
 
 // Bubble Plot Function
 function createBubblePlot(filterType) {
-    d3.csv("../data/sentiments_CAvideos_uniq.csv").then(data => {
+    d3.csv("./data/sentiments_CAvideos_uniq.csv").then(data => {
 
         // Format and parse the data based on the filter type
         data.forEach(d => {
@@ -95,21 +95,36 @@ function createBubblePlot(filterType) {
             .attr("cy", d => yScale(d.views))
             .attr("r", d => sizeScale(d.engagement))
             .attr("fill", "steelblue")
-            .attr("opacity", 0.8)
+            .attr("opacity", 0.5)
             .on("mouseover", function () {
-                d3.select(this).attr("fill", "orange");
+                d3.select(this)
+                    .attr("fill", d => d.sentiment > 0.2 ? "green" : d.sentiment < -0.4 ? "red" : "orange")
+                    .attr("opacity", 0.7);
             })
             .on("mouseout", function () {
                 if (this !== selectedBubble) {
-                    d3.select(this).attr("fill", "steelblue");
+                    d3.select(this)
+                        .attr("fill", "steelblue")
+                        .attr("opacity", 0.5);
                 }
             })
             .on("click", function (event, d) {
-                selectedBubble = this;
-                if (selectedBubble) {
-                    d3.select(selectedBubble).attr("fill", "orange");
+                // If there is a previously selected bubble and it's not the same as the currently clicked bubble
+                if (selectedBubble && selectedBubble !== this) {
+                    d3.select(selectedBubble)
+                        .attr("fill", "steelblue") // Reset the previous bubble to blue
+                        .attr("opacity", 0.5); // Reset the opacity of the previous bubble
                 }
-                // Display the tooltip initially
+            
+                // Update the selectedBubble to the currently clicked bubble
+                selectedBubble = this;
+            
+                // Highlight the currently clicked bubble
+                d3.select(this)
+                    .attr("fill", d => d.sentiment > 0.2 ? "green" : d.sentiment < -0.4 ? "red" : "orange") // Highlight based on sentiment
+                    .attr("opacity", 0.9); // Make the clicked bubble stand out
+            
+                // Display the tooltip
                 tooltip.style("display", "block");
             
                 // Clear previous tooltip content
@@ -119,7 +134,7 @@ function createBubblePlot(filterType) {
                 tooltip.append("div")
                     .attr("class", "tooltip-title")
                     .html(`<strong>Sentiment scores for video ${filterType}</strong>`);
-
+            
                 tooltip.append("div")
                     .attr("class", "chart-container")
                     .style("display", "flex")
@@ -177,12 +192,15 @@ function createBubblePlot(filterType) {
         d3.select("body").on("click", function (event) {
             if (!event.target.closest("circle") && !event.target.closest(".tooltip")) {
                 if (selectedBubble) {
-                    d3.select(selectedBubble).attr("fill", "steelblue");
+                    d3.select(selectedBubble)
+                        .attr("fill", "steelblue")
+                        .attr("opacity", 0.5);
                     selectedBubble = null;
                 }
                 tooltip.style("display", "none");
             }
         });
+
 
     });
 }
