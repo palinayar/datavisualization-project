@@ -70,21 +70,28 @@
             margin: 5px;
         }
     </style>
-    <body>
-        <div>
-            <button onclick="updateState('tags')">Tags</button>
-            <button onclick="updateState('description')">Description</button>
-            <button onclick="updateState('title')">Title</button>
-        </div>
+<body>
+    <div>
+        <button onclick="updateState('tags')">Tags</button>
+        <button onclick="updateState('description')">Description</button>
+        <button onclick="updateState('title')">Title</button>
+    </div>
+    <div class="chart-container">
         <div class="chart">
             <svg id="bubble"></svg>
         </div>
-        <div id="tooltip" class="tooltip" style="display: none;">
-            <svg id="donutChart" width="150" height="150"></svg>
-        </div>
-        <script src="https://d3js.org/d3.v7.min.js"></script>
-        <script type="module" src="./sentimentCharts/SenBubbleChart.js"></script>
-    </body>
+        <div id="timegrid"></div>
+    </div>
+    <div id="tooltip" class="tooltip" style="display: none;">
+        <svg id="donutChart" width="150" height="150"></svg>
+    </div>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script type="module" src="./sentimentCharts/SenBubbleChart.js"></script>
+    <script src="./timegrid/timegrid.js"></script>
+    <script>
+        initTimeGrid();
+    </script>
+</body>
 </html>
 
 

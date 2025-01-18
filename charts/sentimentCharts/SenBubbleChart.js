@@ -1,7 +1,7 @@
 import { createDonutChart } from './SenDonutChart.js';
 
 let currentFilter = "tags"; // Default filter type
-
+let currentMonth = null; // Default month filter
 
 // Set up the SVG canvas dimensions
 const margin = { top: 30, right: 30, bottom: 30, left: 30 };
@@ -43,15 +43,21 @@ const dragYAxis = d3.drag()
 });
 
 // Bubble Plot Function
-function createBubblePlot(filterType) {
-    d3.csv("../data/sentiments_CAvideos_uniq.csv").then(data => {
+function createBubblePlot(filterType, month) {
+    d3.csv("../data/sentiments_CAvideos.csv").then(data => {
 
         // Format and parse the data based on the filter type
         data.forEach(d => {
             d.sentiment = +d[`${filterType}_pos`] - +d[`${filterType}_neg`]; // Sentiment score
             d.views = +d.views; // Views
             d.engagement = +d.comment_count; // Engagement metric
+            d.publish_time = new Date(d.publish_time); // Parse publish_time
         });
+
+        // Filter data by month if a month is selected
+        if (month) {
+            data = data.filter(d => d.publish_time.getMonth() === new Date(Date.parse(month +" 1, 2023")).getMonth());
+        }
 
         // Update scales
         xScale.domain([-1, 1]); // Sentiment range from -1 to 1
@@ -188,9 +194,10 @@ function createBubblePlot(filterType) {
 }
 
 // Update chart state
-function updateState(newFilter) {
+function updateState(newFilter, month = null) {
     currentFilter = newFilter; // Update global filter
-    createBubblePlot(currentFilter); // Update bubble plot
+    currentMonth = month; // Update global month filter
+    createBubblePlot(currentFilter, currentMonth); // Update bubble plot
 }
 
 // Initialize with default state
