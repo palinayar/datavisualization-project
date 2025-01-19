@@ -1,8 +1,9 @@
 import { createDonutChart } from './SenDonutChart.js';
 
 let currentFilter = "tags"; // Default filter type
+let currentCategory = 0; // Default category type
 
-
+let categories = ["Film & Animation", "Autos & Vehicles", "Music"]
 // Set up the SVG canvas dimensions
 const margin = { top: 30, right: 30, bottom: 30, left: 30 };
 const width = 800; // Smaller width
@@ -43,7 +44,7 @@ const dragYAxis = d3.drag()
 });
 
 // Bubble Plot Function
-function createBubblePlot(filterType) {
+function createBubblePlot(filterType, categoryInt) {
     d3.csv("./data/sentiments_CAvideos_uniq.csv").then(data => {
 
         // Format and parse the data based on the filter type
@@ -51,7 +52,13 @@ function createBubblePlot(filterType) {
             d.sentiment = +d[`${filterType}_pos`] - +d[`${filterType}_neg`]; // Sentiment score
             d.views = +d.views; // Views
             d.engagement = +d.comment_count; // Engagement metric
+            d.category_id = +d.category_id;
         });
+
+        // Filter data by category if a category is selected
+        if (categoryInt) {
+            data = data.filter(d => d.category_id == categoryInt);
+        }
 
         // Update scales
         xScale.domain([-1, 1]); // Sentiment range from -1 to 1
@@ -148,6 +155,10 @@ function createBubblePlot(filterType) {
                 tooltip.append("div")
                     .attr("class", "video-title")
                     .html(`<strong>Title:</strong> ${d.title}`);
+
+                tooltip.append("div")
+                    .attr("class", "video-category")
+                    .html(`<strong>Category:</strong> ${categories[categoryInt]}`);
             
                 tooltip.append("div")
                     .attr("class", "video-likes")
@@ -205,12 +216,14 @@ function createBubblePlot(filterType) {
     });
 }
 
+
 // Update chart state
-function updateState(newFilter) {
+function updateState(newFilter, newCategory) {
     currentFilter = newFilter; // Update global filter
-    createBubblePlot(currentFilter); // Update bubble plot
+    currentCategory = newCategory;
+    createBubblePlot(currentFilter, currentCategory); // Update bubble plot
 }
 
 // Initialize with default state
 window.updateState = updateState;
-updateState("tags");
+updateState("tags", null);

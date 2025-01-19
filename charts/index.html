@@ -55,7 +55,7 @@
         .video-title {
             margin-top: 15px; /* Space above the video title */
         }
-        .video-likes, .video-dislikes {
+        .video-likes, .video-dislikes .video-category{
             margin-top: 5px; /* Optional spacing between likes/dislikes */
             font-size: small;
         }
@@ -72,9 +72,14 @@
     </style>
     <body>
         <div>
-            <button onclick="updateState('tags')">Tags</button>
-            <button onclick="updateState('description')">Description</button>
-            <button onclick="updateState('title')">Title</button>
+            <button onclick="updateState('tags', 0)">Tags</button>
+            <button onclick="updateState('description', 0)">Description</button>
+            <button onclick="updateState('title', 0)">Title</button>
+        </div>
+        <div>
+            <button onclick="updateState('description', 0)">Film & Animation</button>
+            <button onclick="updateState('description', 1)">Autos & Vehicles</button>
+            <button onclick="updateState('description', 2)">Music</button>
         </div>
         <div class="chart">
             <svg id="bubble"></svg>
