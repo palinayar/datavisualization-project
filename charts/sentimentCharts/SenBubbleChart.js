@@ -1,7 +1,7 @@
+import { allRows } from "../dataLoader.js";
+import { currentFilter, currentMonth } from "../state.js";
+import { createSunburstPlot } from "../sunburst.js";
 import { createDonutChart } from "./SenDonutChart.js";
-
-let currentFilter = "tags"; // Default filter type
-let currentMonth = null; // Default month filter
 
 // Set up the SVG canvas dimensions
 const margin = { top: 30, right: 30, bottom: 30, left: 30 };
@@ -46,187 +46,187 @@ const dragYAxis = d3
     svg.selectAll("circle").attr("cy", (d) => yScale(d.views));
   });
 
+function filterByMonth(data, month) {
+  const [selectedMonth, daysString] = month.split(" ");
+  const monthIndex = new Date(
+    Date.parse(selectedMonth + " 1, 2018")
+  ).getMonth();
+  // Handles multiple days
+  if (daysString) {
+    const dayList = daysString.split(",").map(Number);
+    return data.filter(
+      (d) =>
+        d.publish_time.getMonth() === monthIndex &&
+        dayList.includes(d.publish_time.getDate())
+    );
+  } else {
+    // Filter by month only
+    return data.filter((d) => d.publish_time.getMonth() === monthIndex);
+  }
+}
+
 // Bubble Plot Function
-function createBubblePlot(filterType, month) {
-  d3.csv("./data/sentiments_CAvideos.csv").then((data) => {
-    // Format and parse the data based on the filter type
-    data.forEach((d) => {
-      d.sentiment = +d[`${filterType}_pos`] - +d[`${filterType}_neg`]; // Sentiment score
-      d.views = +d.views; // Views
-      d.engagement = +d.comment_count; // Engagement metric
-      d.publish_time = new Date(d.publish_time); // Parse publish_time
+async function createBubblePlot(filterType, month, country, category) {
+  let data = allRows;
+
+  // Format and parse the data based on the filter type
+  data.forEach((d) => {
+    d.sentiment = +d[`${filterType}_pos`] - +d[`${filterType}_neg`]; // Sentiment score
+    d.views = +d.views; // Views
+    d.engagement = +d.comment_count; // Engagement metric
+    d.publish_time = new Date(d.publish_time); // Parse publish_time
+  });
+
+  // Filter data by month if a month is selected (currently only days are selected, month selection is broken)
+  if (month) {
+    data = filterByMonth(data, month);
+  }
+
+  if (country) {
+    data = data.filter((d) => d.country === country);
+  }
+
+  if (category) {
+    data = data.filter((d) => d.category_name === category);
+  }
+
+  // Update scales
+  xScale.domain([-1, 1]); // Sentiment range from -1 to 1
+  yScale.domain([0, d3.max(data, (d) => d.views)]); // Views range from 0 to max views
+  sizeScale.domain(d3.extent(data, (d) => d.engagement));
+
+  // Clear old elements
+  svg.selectAll("*").remove();
+
+  // Add X-axis
+  svg
+    .append("g")
+    .attr("transform", `translate(0, ${yScale(0)})`) // Position X-axis at y = 0
+    .call(d3.axisBottom(xScale))
+    .append("text")
+    .attr("x", width / 2)
+    .attr("y", 40)
+    .attr("fill", "black")
+    .style("text-anchor", "middle")
+    .text("Sentiment Score (Negative to Positive)");
+
+  // Add Y-axis
+  svg
+    .append("g")
+    .attr("class", "y-axis")
+    .attr("transform", `translate(${xScale(0)}, 0)`) // Initial position
+    .call(d3.axisLeft(yScale))
+    .append("text")
+    .attr("x", 0) // Adjust for padding
+    .attr("y", -20) // Position above the axis
+    .attr("fill", "black")
+    .style("text-anchor", "middle")
+    .text("Views");
+
+  let selectedBubble = null; // Keep track of the currently selected bubble
+
+  // Add bubbles
+  svg
+    .selectAll("circle")
+    .data(data)
+    .enter()
+    .append("circle")
+    .attr("cx", (d) => xScale(d.sentiment))
+    .attr("cy", (d) => yScale(d.views))
+    .attr("r", (d) => sizeScale(d.engagement))
+    .attr("fill", "steelblue")
+    .attr("opacity", 0.8)
+    .on("mouseover", function () {
+      d3.select(this).attr("fill", "orange");
+    })
+    .on("mouseout", function () {
+      if (this !== selectedBubble) {
+        d3.select(this).attr("fill", "steelblue");
+      }
+    })
+    .on("click", function (event, d) {
+      selectedBubble = this;
+      if (selectedBubble) {
+        d3.select(selectedBubble).attr("fill", "orange");
+      }
+      // Display the tooltip initially
+      tooltip.style("display", "block");
+
+      // Clear previous tooltip content
+      tooltip.selectAll("*").remove();
+
+      // Add content to the tooltip
+      tooltip
+        .append("div")
+        .attr("class", "tooltip-title")
+        .html(`<strong>Sentiment scores for video ${filterType}</strong>`);
+
+      tooltip
+        .append("div")
+        .attr("class", "chart-container")
+        .style("display", "flex")
+        .style("justify-content", "center")
+        .style("align-items", "center")
+        .append("svg")
+        .attr("id", "donutChart")
+        .attr("width", 300)
+        .attr("height", 200);
+
+      tooltip
+        .append("div")
+        .attr("class", "video-title")
+        .html(`<strong>Title:</strong> ${d.title}`);
+
+      tooltip
+        .append("div")
+        .attr("class", "video-likes")
+        .html(`<strong>Likes:</strong> ${d.likes}`);
+
+      tooltip
+        .append("div")
+        .attr("class", "video-dislikes")
+        .html(`<strong>Dislikes:</strong> ${d.dislikes}`);
+
+      const sentimentData = [
+        { label: "Positive", value: d[`${filterType}_pos`], color: "green" },
+        { label: "Neutral", value: d[`${filterType}_neu`], color: "orange" },
+        { label: "Negative", value: d[`${filterType}_neg`], color: "red" },
+      ];
+
+      createDonutChart("#donutChart", sentimentData);
+
+      // Get tooltip dimensions
+      const tooltipWidth = tooltip.node().offsetWidth;
+      const tooltipHeight = tooltip.node().offsetHeight;
+      const screenWidth = window.innerWidth;
+      const screenHeight = window.innerHeight;
+
+      // Calculate initial tooltip position
+      let left = event.pageX + 10;
+      let top = event.pageY + 10;
+
+      // Adjust position to fit within the viewport
+      if (left + tooltipWidth > screenWidth) {
+        left = event.pageX - tooltipWidth - 10; // Shift to the left
+      }
+      if (top + tooltipHeight > screenHeight) {
+        top = event.pageY - tooltipHeight - 10; // Shift above
+      }
+
+      // Apply adjusted position
+      tooltip.style("left", `${left}px`).style("top", `${top}px`);
     });
 
-    // Filter data by month if a month is selected (currently only days are selected, month selection is broken)
-    if (month) {
-      const [selectedMonth, daysString] = month.split(" ");
-      const monthIndex = new Date(
-        Date.parse(selectedMonth + " 1, 2018")
-      ).getMonth();
-      // Handles multiple days
-      if (daysString) {
-        const dayList = daysString.split(",").map(Number);
-        data = data.filter(
-          (d) =>
-            d.publish_time.getMonth() === monthIndex &&
-            dayList.includes(d.publish_time.getDate())
-        );
-      } else {
-        // Filter by month only
-        data = data.filter((d) => d.publish_time.getMonth() === monthIndex);
+  // Hide tooltip when clicking outside
+  d3.select("body").on("click", function (event) {
+    if (!event.target.closest("circle") && !event.target.closest(".tooltip")) {
+      if (selectedBubble) {
+        d3.select(selectedBubble).attr("fill", "steelblue");
+        selectedBubble = null;
       }
+      tooltip.style("display", "none");
     }
-
-    // Update scales
-    xScale.domain([-1, 1]); // Sentiment range from -1 to 1
-    yScale.domain([0, d3.max(data, (d) => d.views)]); // Views range from 0 to max views
-    sizeScale.domain(d3.extent(data, (d) => d.engagement));
-
-    // Clear old elements
-    svg.selectAll("*").remove();
-
-    // Add X-axis
-    svg
-      .append("g")
-      .attr("transform", `translate(0, ${yScale(0)})`) // Position X-axis at y = 0
-      .call(d3.axisBottom(xScale))
-      .append("text")
-      .attr("x", width / 2)
-      .attr("y", 40)
-      .attr("fill", "black")
-      .style("text-anchor", "middle")
-      .text("Sentiment Score (Negative to Positive)");
-
-    // Add Y-axis
-    svg
-      .append("g")
-      .attr("class", "y-axis")
-      .attr("transform", `translate(${xScale(0)}, 0)`) // Initial position
-      .call(d3.axisLeft(yScale))
-      .append("text")
-      .attr("x", 0) // Adjust for padding
-      .attr("y", -20) // Position above the axis
-      .attr("fill", "black")
-      .style("text-anchor", "middle")
-      .text("Views");
-
-    let selectedBubble = null; // Keep track of the currently selected bubble
-
-    // Add bubbles
-    svg
-      .selectAll("circle")
-      .data(data)
-      .enter()
-      .append("circle")
-      .attr("cx", (d) => xScale(d.sentiment))
-      .attr("cy", (d) => yScale(d.views))
-      .attr("r", (d) => sizeScale(d.engagement))
-      .attr("fill", "steelblue")
-      .attr("opacity", 0.8)
-      .on("mouseover", function () {
-        d3.select(this).attr("fill", "orange");
-      })
-      .on("mouseout", function () {
-        if (this !== selectedBubble) {
-          d3.select(this).attr("fill", "steelblue");
-        }
-      })
-      .on("click", function (event, d) {
-        selectedBubble = this;
-        if (selectedBubble) {
-          d3.select(selectedBubble).attr("fill", "orange");
-        }
-        // Display the tooltip initially
-        tooltip.style("display", "block");
-
-        // Clear previous tooltip content
-        tooltip.selectAll("*").remove();
-
-        // Add content to the tooltip
-        tooltip
-          .append("div")
-          .attr("class", "tooltip-title")
-          .html(`<strong>Sentiment scores for video ${filterType}</strong>`);
-
-        tooltip
-          .append("div")
-          .attr("class", "chart-container")
-          .style("display", "flex")
-          .style("justify-content", "center")
-          .style("align-items", "center")
-          .append("svg")
-          .attr("id", "donutChart")
-          .attr("width", 300)
-          .attr("height", 200);
-
-        tooltip
-          .append("div")
-          .attr("class", "video-title")
-          .html(`<strong>Title:</strong> ${d.title}`);
-
-        tooltip
-          .append("div")
-          .attr("class", "video-likes")
-          .html(`<strong>Likes:</strong> ${d.likes}`);
-
-        tooltip
-          .append("div")
-          .attr("class", "video-dislikes")
-          .html(`<strong>Dislikes:</strong> ${d.dislikes}`);
-
-        const sentimentData = [
-          { label: "Positive", value: d[`${filterType}_pos`], color: "green" },
-          { label: "Neutral", value: d[`${filterType}_neu`], color: "orange" },
-          { label: "Negative", value: d[`${filterType}_neg`], color: "red" },
-        ];
-
-        createDonutChart("#donutChart", sentimentData);
-
-        // Get tooltip dimensions
-        const tooltipWidth = tooltip.node().offsetWidth;
-        const tooltipHeight = tooltip.node().offsetHeight;
-        const screenWidth = window.innerWidth;
-        const screenHeight = window.innerHeight;
-
-        // Calculate initial tooltip position
-        let left = event.pageX + 10;
-        let top = event.pageY + 10;
-
-        // Adjust position to fit within the viewport
-        if (left + tooltipWidth > screenWidth) {
-          left = event.pageX - tooltipWidth - 10; // Shift to the left
-        }
-        if (top + tooltipHeight > screenHeight) {
-          top = event.pageY - tooltipHeight - 10; // Shift above
-        }
-
-        // Apply adjusted position
-        tooltip.style("left", `${left}px`).style("top", `${top}px`);
-      });
-
-    // Hide tooltip when clicking outside
-    d3.select("body").on("click", function (event) {
-      if (
-        !event.target.closest("circle") &&
-        !event.target.closest(".tooltip")
-      ) {
-        if (selectedBubble) {
-          d3.select(selectedBubble).attr("fill", "steelblue");
-          selectedBubble = null;
-        }
-        tooltip.style("display", "none");
-      }
-    });
   });
 }
 
-// Update chart state
-function updateState(newFilter, month = null) {
-  currentFilter = newFilter; // Update global filter
-  currentMonth = month; // Update global month filter
-  createBubblePlot(currentFilter, currentMonth); // Update bubble plot
-}
-
-// Initialize with default state
-window.updateState = updateState;
-updateState("tags");
+export { createBubblePlot, currentFilter, filterByMonth };
