@@ -1,10 +1,10 @@
-// Ensure a default filter
+// Wipe filter, ensure its cleared
 if (typeof currentFilter === 'undefined') {
   var currentFilter = "tags";
 }
 
 function initTimeGrid() {
-  // Either select existing SVG or create a new one if none exists
+  // Create the svg, if already exists, clear it
   let svg = d3.select("#timegrid").select("svg");
   if (svg.empty()) {
     svg = d3.select("#timegrid")
@@ -12,11 +12,10 @@ function initTimeGrid() {
       .attr("width", 400)
       .attr("height", 300);
   } else {
-    // Clear out any existing elements
     svg.selectAll("*").remove();
   }
 
-  // Display months in a grid
+  // Initliaze constants, including months
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const cols = 4;
   const rectSize = 80;
@@ -51,18 +50,18 @@ function initTimeGrid() {
 
 function createDayGrid(month) {
   const svg = d3.select("#timegrid").select("svg");
-  // Remove old squares & text
+  // Wipe&Reset
   svg.selectAll("rect").remove();
   svg.selectAll("text").remove();
 
-  // Setup day data
+  // Setup day data, using 2018 for febuary
   const daysInMonth = new Date(
-    2023,
-    new Date(Date.parse(month + " 1, 2023")).getMonth() + 1,
+    2018,
+    new Date(Date.parse(month + " 1, 2018")).getMonth() + 1,
     0
   ).getDate();
   const days = d3.range(1, daysInMonth + 1);
-  const cols = 7; // for days of the week
+  const cols = 7;
   const rectSize = 50;
   const padding = 5;
 
@@ -83,25 +82,23 @@ function createDayGrid(month) {
     .attr("width", rectSize)
     .attr("height", rectSize)
     .on("end", function() {
-      // Single unified click handler for shift-click or normal click
+      // Click logic
       d3.select(this).on("click", function(event, d) {
+        //Shift logic for zoom-out, really this just wipes + resets
         if (event.shiftKey) {
-          // Remove days and re-init
           svg.selectAll("*").remove();
           window.updateState(currentFilter);
           initTimeGrid();
-        } else {
-          // Remove black border from all squares
+        } 
+        // Brush selection for multiple days, this is also where we pass the data to the bubble chart.
+        else {
           svg.selectAll("rect")
             .attr("stroke", null)
             .attr("stroke-width", null);
 
-          // Add black border to newly selected square
           d3.select(this)
             .attr("stroke", "black")
             .attr("stroke-width", 2);
-
-          // Single day update
           window.updateState(currentFilter, `${month} ${d}`);
         }
       });
@@ -123,61 +120,78 @@ function createDayGrid(month) {
     .attr("x", (d, i) => (i % cols) * (rectSize + padding) + rectSize / 2)
     .attr("y", (d, i) => Math.floor(i / cols) * (rectSize + padding) + rectSize / 2);
 
-  // --------- Add a brush for multi-day selection --------------
-  const brush = d3.brush()
-    .extent([[0, 0], [400, 300]]) // match SVG width & height
-    .on("end", brushed);
+// Create the brush
+const brush = d3.brush()
+  .extent([[0, 0], [400, 300]])
+  .on("end", brushed);
 
-  svg.append("g")
-    .attr("class", "brush")
-    .call(brush);
+svg.append("g")
+  .attr("class", "brush")
+  .call(brush);
 
-  function brushed(event) {
-    const selection = event.selection;
-    if (!selection) return;
-
-    const [[x0, y0], [x1, y1]] = selection;
-
-    // Clear existing borders
+// Handle clicks on the brush, this is to maintain shiftclick functionality, same code as above
+d3.select(this).on("click", function(event, d) {
+  if (event.shiftKey) {
+    svg.selectAll("*").remove();
+    window.updateState(currentFilter);
+    initTimeGrid();
+  } else {
     svg.selectAll("rect")
       .attr("stroke", null)
       .attr("stroke-width", null);
-
-    // Filter squares fully within the brush area
-    const selectedRect = svg.selectAll("rect")
-      .filter(function() {
-        const xVal = +d3.select(this).attr("x");
-        const yVal = +d3.select(this).attr("y");
-  
-        // Compute overlap area
-        const overlapWidth = Math.min(x1, xVal + rectSize) - Math.max(x0, xVal);
-        const overlapHeight = Math.min(y1, yVal + rectSize) - Math.max(y0, yVal);
-  
-        // If either dimension is negative, no overlap
-        if (overlapWidth <= 0 || overlapHeight <= 0) {
-          return false;
-        }
-  
-        const intersectionArea = overlapWidth * overlapHeight;
-        const squareArea = rectSize * rectSize;
-  
-        // Require at least 30% coverage
-        return intersectionArea >= 0.3 * squareArea;
-      })
+    d3.select(this)
       .attr("stroke", "black")
       .attr("stroke-width", 2);
+    window.updateState(currentFilter, `${month} ${d}`);
+  }
+});
 
-    // Get all of the brushed days from their bound data
+function brushed(event) {
+  const selection = event.selection;
+  if (!selection) return;
+
+  const [[x0, y0], [x1, y1]] = selection;
+
+  // Clear existing borders
+  svg.selectAll("rect")
+    .attr("stroke", null)
+    .attr("stroke-width", null);
+
+  // Filter squares fully within the brush area
+  const selectedRect = svg.selectAll("rect")
+    .filter(function() {
+      const xVal = +d3.select(this).attr("x");
+      const yVal = +d3.select(this).attr("y");
+
+      // Compute overlap area
+      const overlapWidth = Math.min(x1, xVal + rectSize) - Math.max(x0, xVal);
+      const overlapHeight = Math.min(y1, yVal + rectSize) - Math.max(y0, yVal);
+
+      // If either dimension is negative, no overlap
+      if (overlapWidth <= 0 || overlapHeight <= 0) {
+        return false;
+      }
+
+      const intersectionArea = overlapWidth * overlapHeight;
+      const squareArea = rectSize * rectSize;
+
+      // Require at least 30% coverage so that you dont need to fully encompass every square
+      return intersectionArea >= 0.3 * squareArea;
+    })
+    .attr("stroke", "black")
+    .attr("stroke-width", 2);
+
     const brushedDays = selectedRect.data();
 
-    // Combine all brushed days into a single parameter string
-    // e.g., "Jan 1,2,3"
-    if (brushedDays.length > 0) {
-      const joinedDays = brushedDays.join(",");
-      window.updateState(currentFilter, `${month} ${joinedDays}`);
-    }
-
-    // Clear the brush selection if desired
-    svg.select(".brush").call(brush.move, null);
+  // Combine all brushed days into a string to pass along for the filters
+  if (brushedDays.length > 0) {
+    const joinedDays = brushedDays.join(",");
+    window.updateState(currentFilter, `${month} ${joinedDays}`);
   }
+
+  // Clear the brush selection if desired
+  svg.select(".brush").call(brush.move, null);
+}
+
+
 }
