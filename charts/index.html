@@ -1,97 +1,96 @@
-
 <!-- run to see on localhost: npx http-server --no-cache -->
-
 
 <!DOCTYPE html>
 <html>
-    <head>
-        <link rel="stylesheet" href="index.css">
-        <title>Sentiment Analysis</title>
-    </head>
-    <style>
-        body {
-            font-family: sans-serif;
-            margin: 0;
-            padding: 0;
-        }
-        .chart {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            width: 100vw;
-        }
-        .chart-container {
-            display: flex;
-            justify-content: center; /* Horizontally center */
-            align-items: center; /* Vertically center */
-            width: 100%; /* Take full width of parent */
-        }
-        .tooltip {
-            position: absolute;
-            background-color: white;
-            border: 1px solid #ccc;
-            padding: 15px;
-            border-radius: 7px;
-            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
-            font-size: 14px;
-            z-index: 10;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-evenly;
-            align-items: center; 
-            text-align: center;
-            gap: 10px; /* Space between children */
-            height: auto; /* Adjust height dynamically */
-            width: 350px; /* Set fixed width */
-            word-wrap: break-word; /* Force wrapping on long text */
-            word-break: break-word; /* Optional for additional control */
-        }
-        
-        .tooltip-title {
-            font-weight: bold;
-            margin-bottom: 10px; /* Space below the title */
-        }
-        .video-title {
-            margin-top: 15px; /* Space above the video title */
-        }
-        .video-likes, .video-dislikes {
-            margin-top: 5px; /* Optional spacing between likes/dislikes */
-            font-size: small;
-        }
-        #donutChart {
-            display: block;
-            margin: 10px 0; /* Space around the donut chart */
-        }
-        .legend-item {
-            margin-top: 8px;
-        }
-        div button {
-            margin: 5px;
-        }
-    </style>
-<body>
+  <head>
+    <link rel="stylesheet" href="index.css" />
+    <title>Sentiment Analysis</title>
+  </head>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    .chart {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      width: 100vw;
+    }
+    .chart-container {
+      display: flex;
+      justify-content: center; /* Horizontally center */
+      align-items: center; /* Vertically center */
+      width: 100%; /* Take full width of parent */
+    }
+    .tooltip {
+      position: absolute;
+      background-color: white;
+      border: 1px solid #ccc;
+      padding: 15px;
+      border-radius: 7px;
+      box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+      font-size: 14px;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-evenly;
+      align-items: center;
+      text-align: center;
+      gap: 10px; /* Space between children */
+      height: auto; /* Adjust height dynamically */
+      width: 350px; /* Set fixed width */
+      word-wrap: break-word; /* Force wrapping on long text */
+      word-break: break-word; /* Optional for additional control */
+    }
+
+    .tooltip-title {
+      font-weight: bold;
+      margin-bottom: 10px; /* Space below the title */
+    }
+    .video-title {
+      margin-top: 15px; /* Space above the video title */
+    }
+    .video-likes,
+    .video-dislikes {
+      margin-top: 5px; /* Optional spacing between likes/dislikes */
+      font-size: small;
+    }
+    #donutChart {
+      display: block;
+      margin: 10px 0; /* Space around the donut chart */
+    }
+    .legend-item {
+      margin-top: 8px;
+    }
+    div button {
+      margin: 5px;
+    }
+  </style>
+  <body>
     <div>
-        <button onclick="updateState('tags')">Tags</button>
-        <button onclick="updateState('description')">Description</button>
-        <button onclick="updateState('title')">Title</button>
+      <button onclick="updateState('tags')">Tags</button>
+      <button onclick="updateState('description')">Description</button>
+      <button onclick="updateState('title')">Title</button>
     </div>
     <div class="chart-container">
-        <div class="chart">
-            <svg id="bubble"></svg>
-        </div>
-        <div id="timegrid"></div>
+      <div id="sunburstChart"></div>
+      <div class="chart">
+        <svg id="bubble"></svg>
+      </div>
+      <div id="timegrid"></div>
     </div>
-    <div id="tooltip" class="tooltip" style="display: none;">
-        <svg id="donutChart" width="150" height="150"></svg>
+    <div id="tooltip" class="tooltip" style="display: none">
+      <svg id="donutChart" width="150" height="150"></svg>
     </div>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script type="module" src="./sentimentCharts/SenBubbleChart.js"></script>
     <script src="./timegrid/timegrid.js"></script>
+    <script type="module" src="./sunburst.js"></script>
     <script>
-        initTimeGrid();
+      initTimeGrid();
     </script>
-</body>
+  </body>
 </html>
-
-
