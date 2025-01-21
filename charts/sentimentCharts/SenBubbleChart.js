@@ -56,7 +56,21 @@ function createBubblePlot(filterType, month) {
 
         // Filter data by month if a month is selected
         if (month) {
-            data = data.filter(d => d.publish_time.getMonth() === new Date(Date.parse(month +" 1, 2023")).getMonth());
+            // e.g. "Jan 1,2,3"
+            const [selectedMonth, daysString] = month.split(" ");
+            const monthIndex = new Date(Date.parse(selectedMonth +" 1, 2023")).getMonth();
+
+            if (daysString) {
+                // Split multiple days
+                const dayList = daysString.split(",").map(Number);
+                data = data.filter(d =>
+                    d.publish_time.getMonth() === monthIndex &&
+                    dayList.includes(d.publish_time.getDate())
+                );
+            } else {
+                // Filter by month only
+                data = data.filter(d => d.publish_time.getMonth() === monthIndex);
+            }
         }
 
         // Update scales
