@@ -17,7 +17,7 @@ const files = [
   },
   {
     path: "./data/sentiments_MXvideos.csv",
-    metadata_path: "./data/US_category_id.json",
+    metadata_path: "./data/MX_category_id.json",
     country: "Mexico",
   },
 ];
