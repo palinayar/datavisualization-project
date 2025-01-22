@@ -46,7 +46,7 @@ for (const f of files) {
 
   // FIXME:
   // temporary speedup for debugging, work with 25% of data
-  rows = rows.slice(0, Math.floor(rows.length / 4));
+  rows = rows.filter((_, index) => index % 4 === 0);
 
   // Collect data for this country
   allCountryData.push({ country: f.country, rows });
