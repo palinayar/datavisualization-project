@@ -260,45 +260,36 @@ function createDayGrid(month) {
   const padding = 5;
   const offset = 50;
 
-  // Append day squares
-  svg
-    .selectAll("rect.day")
-    .data(days)
-    .enter()
-    .append("rect")
-    .attr("class", "day")
-    .attr("x", (d, i) => (i % cols) * (rectSize + padding) + 200)
-    .attr(
-      "y",
-      (d, i) => Math.floor(i / cols) * (rectSize + padding) + 150 + offset
-    )
-    .attr("width", 0)
-    .attr("height", 5000)
-    .attr("fill", (d) => colorScale(dayViews.get(d)))
-    .transition()
-    .duration(1000)
-    .attr("x", (d, i) => (i % cols) * (rectSize + padding))
-    .attr("y", (d, i) => Math.floor(i / cols) * (rectSize + padding) + offset)
-    .attr("width", rectSize)
-    .attr("height", rectSize)
-    .on("end", function () {
-      // Click logic
-      d3.select(this).on("click", function (event, d) {
-        // Shift logic for zoom-out, really this just wipes + resets
-        if (event.shiftKey) {
-          svg.selectAll("*").remove();
-          window.updateState(currentFilter);
-          initTimeGrid();
-        }
-        // Brush selection for multiple days, this is also where we pass the data to the bubble chart.
-        else {
-          svg.selectAll("rect").attr("stroke", null).attr("stroke-width", null);
-
-          d3.select(this).attr("stroke", "black").attr("stroke-width", 2);
-          window.updateState(currentFilter, `${month} ${d}`);
-        }
-      });
-    });
+// Append day squares
+svg
+  .selectAll("rect.day")
+  .data(days)
+  .enter()
+  .append("rect")
+  .attr("class", "day")
+  .attr("x", (d, i) => (i % cols) * (rectSize + padding) + 200)
+  .attr(
+    "y",
+    (d, i) => Math.floor(i / cols) * (rectSize + padding) + 150 + offset
+  )
+  .attr("width", 0)
+  .attr("height", 5000)
+  .attr("fill", (d) => colorScale(dayViews.get(d)))
+  // Attach click handler immediately
+  .on("click", function (event, d) {
+    handleDayClick.call(this, event, d);
+  })
+  // Then apply transition
+  .transition()
+  .duration(1000)
+  .attr("x", (d, i) => (i % cols) * (rectSize + padding))
+  .attr("y", (d, i) => Math.floor(i / cols) * (rectSize + padding) + offset)
+  .attr("width", rectSize)
+  .attr("height", rectSize)
+  .on("end", function() {
+    // Re-bind click handler after transition completes
+    d3.select(this).on("click", handleDayClick);
+  });
 
   // Append text labels
   svg
@@ -330,25 +321,34 @@ function createDayGrid(month) {
     );
 
   // Create the brush
-  const brush = d3
-    .brush()
-    .extent([
-      [0, 0],
-      [400, 300],
-    ])
+  const brush = d3.brush()
+    .extent([[0, 0], [400, 300]])
+    .on("start", () => {})
+    .on("brush", () => {})
     .on("end", brushed);
 
   svg.append("g").attr("class", "brush").call(brush);
-  // Handle clicks on the brush, this is to maintain shiftclick functionality, same code as when generating the squares.
-  d3.select(this).on("click", function (event, d) {
+
+// Add this new helper function
+function handleDayClick(event, d) {
+  if (event.shiftKey) {
+    svg.selectAll("*").remove();
+    window.updateState(currentFilter);
+    initTimeGrid();
+  } else {
+    svg.selectAll("rect").attr("stroke", null).attr("stroke-width", null);
+    d3.select(this).attr("stroke", "black").attr("stroke-width", 2);
+    window.updateState(currentFilter, `${month} ${d}`);
+  }
+}
+
+// Keep the original duplicate handler at the bottom but modify it:
+d3.select(svg.node().parentNode)  // Target the container div instead of 'this'
+  .on("click", function(event) {
     if (event.shiftKey) {
       svg.selectAll("*").remove();
       window.updateState(currentFilter);
       initTimeGrid();
-    } else {
-      svg.selectAll("rect").attr("stroke", null).attr("stroke-width", null);
-      d3.select(this).attr("stroke", "black").attr("stroke-width", 2);
-      window.updateState(currentFilter, `${month} ${d}`);
     }
   });
   function brushed(event) {
