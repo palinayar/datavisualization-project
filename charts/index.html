@@ -81,9 +81,11 @@
   </style>
   <body>
     <div>
-      <button onclick="updateFilterOnly('tags')">Tags</button>
-      <button onclick="updateFilterOnly('description')">Description</button>
-      <button onclick="updateFilterOnly('title')">Title</button>
+      <button onclick="window.updateFilterOnly('tags')">Tags</button>
+      <button onclick="window.updateFilterOnly('description')">
+        Description
+      </button>
+      <button onclick="window.updateFilterOnly('title')">Title</button>
     </div>
     <div class="p-4">
       Current sentiment filter: <span id="filterType">tags</span><br />

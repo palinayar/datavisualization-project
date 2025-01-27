@@ -56,4 +56,6 @@ function updateFilterOnly(newFilter) {
 window.updateState = updateState;
 updateState("tags");
 
+window.updateFilterOnly = updateFilterOnly;
+
 export { currentFilter, currentMonth, currentCountry, currentCategory };
