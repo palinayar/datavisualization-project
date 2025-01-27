@@ -1,5 +1,10 @@
 import { allRows } from "../dataLoader.js";
-import { currentFilter, currentMonth } from "../state.js";
+import {
+  currentCategory,
+  currentCountry,
+  currentFilter,
+  currentMonth,
+} from "../state.js";
 
 function initTimeGrid() {
   let data = allRows;
@@ -134,6 +139,9 @@ function initTimeGrid() {
     .attr("fill", (d) => colorScale(monthViews.get(months.indexOf(d))))
     .on("click", function (event, d) {
       createDayGrid(d);
+
+      // Update the current month
+      window.updateState(currentFilter, d, currentCountry, currentCategory);
     });
 
   // Month labels
@@ -260,36 +268,36 @@ function createDayGrid(month) {
   const padding = 5;
   const offset = 50;
 
-// Append day squares
-svg
-  .selectAll("rect.day")
-  .data(days)
-  .enter()
-  .append("rect")
-  .attr("class", "day")
-  .attr("x", (d, i) => (i % cols) * (rectSize + padding) + 200)
-  .attr(
-    "y",
-    (d, i) => Math.floor(i / cols) * (rectSize + padding) + 150 + offset
-  )
-  .attr("width", 0)
-  .attr("height", 5000)
-  .attr("fill", (d) => colorScale(dayViews.get(d)))
-  // Attach click handler immediately
-  .on("click", function (event, d) {
-    handleDayClick.call(this, event, d);
-  })
-  // Then apply transition
-  .transition()
-  .duration(1000)
-  .attr("x", (d, i) => (i % cols) * (rectSize + padding))
-  .attr("y", (d, i) => Math.floor(i / cols) * (rectSize + padding) + offset)
-  .attr("width", rectSize)
-  .attr("height", rectSize)
-  .on("end", function() {
-    // Re-bind click handler after transition completes
-    d3.select(this).on("click", handleDayClick);
-  });
+  // Append day squares
+  svg
+    .selectAll("rect.day")
+    .data(days)
+    .enter()
+    .append("rect")
+    .attr("class", "day")
+    .attr("x", (d, i) => (i % cols) * (rectSize + padding) + 200)
+    .attr(
+      "y",
+      (d, i) => Math.floor(i / cols) * (rectSize + padding) + 150 + offset
+    )
+    .attr("width", 0)
+    .attr("height", 5000)
+    .attr("fill", (d) => colorScale(dayViews.get(d)))
+    // Attach click handler immediately
+    .on("click", function (event, d) {
+      handleDayClick.call(this, event, d);
+    })
+    // Then apply transition
+    .transition()
+    .duration(1000)
+    .attr("x", (d, i) => (i % cols) * (rectSize + padding))
+    .attr("y", (d, i) => Math.floor(i / cols) * (rectSize + padding) + offset)
+    .attr("width", rectSize)
+    .attr("height", rectSize)
+    .on("end", function () {
+      // Re-bind click handler after transition completes
+      d3.select(this).on("click", handleDayClick);
+    });
 
   // Append text labels
   svg
@@ -321,36 +329,55 @@ svg
     );
 
   // Create the brush
-  const brush = d3.brush()
-    .extent([[0, 0], [400, 300]])
+  const brush = d3
+    .brush()
+    .extent([
+      [0, 0],
+      [400, 300],
+    ])
     .on("start", () => {})
     .on("brush", () => {})
     .on("end", brushed);
 
   svg.append("g").attr("class", "brush").call(brush);
 
-// Add this new helper function
-function handleDayClick(event, d) {
-  if (event.shiftKey) {
-    svg.selectAll("*").remove();
-    window.updateState(currentFilter);
-    initTimeGrid();
-  } else {
-    svg.selectAll("rect").attr("stroke", null).attr("stroke-width", null);
-    d3.select(this).attr("stroke", "black").attr("stroke-width", 2);
-    window.updateState(currentFilter, `${month} ${d}`);
-  }
-}
-
-// Keep the original duplicate handler at the bottom but modify it:
-d3.select(svg.node().parentNode)  // Target the container div instead of 'this'
-  .on("click", function(event) {
+  // Add this new helper function
+  function handleDayClick(event, d) {
     if (event.shiftKey) {
       svg.selectAll("*").remove();
-      window.updateState(currentFilter);
+      window.updateState(
+        currentFilter,
+        currentMonth,
+        currentCountry,
+        currentCategory
+      );
       initTimeGrid();
+    } else {
+      svg.selectAll("rect").attr("stroke", null).attr("stroke-width", null);
+      d3.select(this).attr("stroke", "black").attr("stroke-width", 2);
+      window.updateState(
+        currentFilter,
+        `${month} ${d}`,
+        currentCountry,
+        currentCategory
+      );
     }
-  });
+  }
+
+  // Keep the original duplicate handler at the bottom but modify it:
+  d3.select(svg.node().parentNode) // Target the container div instead of 'this'
+    .on("click", function (event) {
+      if (event.shiftKey) {
+        svg.selectAll("*").remove();
+        window.updateState(
+          currentFilter,
+          currentMonth,
+          currentCountry,
+          currentCategory
+        );
+        initTimeGrid();
+      }
+    });
   function brushed(event) {
     const selection = event.selection;
     if (!selection) return;
@@ -391,7 +418,12 @@ d3.select(svg.node().parentNode)  // Target the container div instead of 'this'
     // Combine all brushed days into a string to pass along for the filters
     if (brushedDays.length > 0) {
       const joinedDays = brushedDays.join(",");
-      window.updateState(currentFilter, `${month} ${joinedDays}`);
+      window.updateState(
+        currentFilter,
+        `${month} ${joinedDays}`,
+        currentCountry,
+        currentCategory
+      );
     }
 
     // Clear the brush selection if desired

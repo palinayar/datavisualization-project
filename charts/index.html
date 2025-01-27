@@ -81,13 +81,14 @@
   </style>
   <body>
     <div>
-      <button onclick="updateState('tags')">Tags</button>
-      <button onclick="updateState('description')">Description</button>
-      <button onclick="updateState('title')">Title</button>
+      <button onclick="updateFilterOnly('tags')">Tags</button>
+      <button onclick="updateFilterOnly('description')">Description</button>
+      <button onclick="updateFilterOnly('title')">Title</button>
     </div>
     <div class="p-4">
       Current sentiment filter: <span id="filterType">tags</span><br />
-      Layer: <span id="layer">All Countries</span>
+      Layer: <span id="layer">All Countries</span><br />
+      Date Filter: <span id="dateFilter">...</span><br />
     </div>
     <div class="chart-container">
       <div id="">

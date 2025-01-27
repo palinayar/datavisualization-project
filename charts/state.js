@@ -37,6 +37,7 @@ function updateState(newFilter, month = null, country = null, category = null) {
   d3.select("#layer").text(
     `${currentCountry ?? "All Countries"}/${currentCategory ?? "..."}`
   );
+  d3.select("#dateFilter").text(currentMonth ?? "All Dates");
 
   console.log(
     "State updated:",
@@ -45,6 +46,10 @@ function updateState(newFilter, month = null, country = null, category = null) {
     currentCountry,
     currentCategory
   );
+}
+
+function updateFilterOnly(newFilter) {
+  updateState(newFilter, currentMonth, currentCountry, currentCategory);
 }
 
 // Initialize with default state
