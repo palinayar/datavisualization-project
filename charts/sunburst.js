@@ -22,7 +22,7 @@ const svg = d3
   .attr("viewBox", [-width / 2, -height / 2, width, height])
   .attr("width", width)
   .attr("height", height)
-  .style("font", "10px sans-serif");
+  .style("font", "12px sans-serif");
 
 // Helper func that picks sentiment, given property
 function getSentiment(row, prop = "title") {
@@ -37,7 +37,12 @@ function getSentiment(row, prop = "title") {
   return "Neutral"; // fallback is "Neutral"
 }
 
-function createSunburstPlot(filterType, month) {
+function createSunburstPlot(
+  filterType,
+  month,
+  country = null,
+  category = null
+) {
   console.log("Rendering sunburst plot...");
 
   // Our top level is "all countries".
@@ -227,43 +232,68 @@ function createSunburstPlot(filterType, month) {
       };
     });
 
-    const t = svg.transition().duration(event.altKey ? 7500 : 750);
+    const useTransition = !event.disableTransitions;
+    const t = useTransition
+      ? svg.transition().duration(event.altKey ? 7500 : 750)
+      : null;
 
-    // Update arcs
-    path
-      .transition(t)
-      .tween("data", (d) => {
-        const i = d3.interpolate(d.current, d.target);
-        return (t) => (d.current = i(t));
-      })
-      .filter(function (d) {
-        return +this.getAttribute("fill-opacity") || arcVisible(d.target);
-      })
-      .attr("fill-opacity", (d) =>
-        arcVisible(d.target) ? (d.children ? 0.6 : 0.4) : 0
-      )
-      .attr("pointer-events", (d) => (arcVisible(d.target) ? "auto" : "none"))
-      .attrTween("d", (d) => () => arc(d.current));
+    // We only use transitions if the user actually clicked on it
+    if (useTransition) {
+      // Update arcs
+      path
+        .transition(t)
+        .tween("data", (d) => {
+          const i = d3.interpolate(d.current, d.target);
+          return (t) => (d.current = i(t));
+        })
+        .filter(function (d) {
+          return +this.getAttribute("fill-opacity") || arcVisible(d.target);
+        })
+        .attr("fill-opacity", (d) =>
+          arcVisible(d.target) ? (d.children ? 0.6 : 0.4) : 0
+        )
+        .attr("pointer-events", (d) => (arcVisible(d.target) ? "auto" : "none"))
+        .attrTween("d", (d) => () => arc(d.current));
 
-    // Update labels
-    label
-      .filter(function (d) {
-        return +this.getAttribute("fill-opacity") || labelVisible(d.target);
-      })
-      .transition(t)
-      .attr("fill-opacity", (d) => +labelVisible(d.target))
-      .attrTween("transform", (d) => () => labelTransform(d.current))
-      .tween("text", function (d) {
-        return () => {
-          // Only show extraText if this is sentiment node (depth == 3)
-          // and  parent is the current selected node
+      // Update labels
+      label
+        .filter(function (d) {
+          return +this.getAttribute("fill-opacity") || labelVisible(d.target);
+        })
+        .transition(t)
+        .attr("fill-opacity", (d) => +labelVisible(d.target))
+        .attrTween("transform", (d) => () => labelTransform(d.current))
+        .tween("text", function (d) {
+          return () => {
+            // Only show extraText if this is sentiment node (depth == 3)
+            // and  parent is the current selected node
+            if (d.depth === 3 && d.parent === selected && d.data.extraText) {
+              this.textContent = d.data.name + d.data.extraText;
+            } else {
+              this.textContent = d.data.name;
+            }
+          };
+        });
+    } else {
+      root.each((d) => (d.current = d.target));
+
+      path
+        .attr("fill-opacity", (d) =>
+          arcVisible(d.target) ? (d.children ? 0.6 : 0.4) : 0
+        )
+        .attr("pointer-events", (d) => (arcVisible(d.target) ? "auto" : "none"))
+        .attr("d", (d) => arc(d.current));
+
+      label
+        .attr("fill-opacity", (d) => +labelVisible(d.target))
+        .attr("transform", (d) => labelTransform(d.current))
+        .text((d) => {
           if (d.depth === 3 && d.parent === selected && d.data.extraText) {
-            this.textContent = d.data.name + d.data.extraText;
-          } else {
-            this.textContent = d.data.name;
+            return d.data.name + d.data.extraText;
           }
-        };
-      });
+          return d.data.name;
+        });
+    }
 
     centerLabel.text(p.data.name);
 
@@ -296,6 +326,40 @@ function createSunburstPlot(filterType, month) {
     const x = (((d.x0 + d.x1) / 2) * 180) / Math.PI;
     const y = ((d.y0 + d.y1) / 2) * radius;
     return `rotate(${x - 90}) translate(${y},0) rotate(${x < 180 ? 0 : 180})`;
+  }
+
+  if (country) {
+    // Find the country
+    const countryNode = root.children.find(
+      (d) => d.data.name === country && d.depth === 1
+    );
+
+    if (countryNode) {
+      clicked(
+        {
+          altKey: false,
+          disableTransitions: true,
+        },
+        countryNode
+      );
+
+      // Find cateegory (if given)
+      if (category) {
+        const categoryNode = countryNode.children?.find(
+          (d) => d.data.name === category && d.depth === 2
+        );
+
+        if (categoryNode) {
+          clicked(
+            {
+              altKey: false,
+              disableTransitions: true,
+            },
+            categoryNode
+          );
+        }
+      }
+    }
   }
 }
 

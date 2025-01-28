@@ -4,9 +4,9 @@ import { createSunburstPlot } from "../sunburst.js";
 import { createDonutChart } from "./SenDonutChart.js";
 
 // Set up the SVG canvas dimensions
-const margin = { top: 30, right: 30, bottom: 30, left: 30 };
-const width = 800; // Smaller width
-const height = 600; // Smaller height
+const margin = { top: 30, right: 0, bottom: 30, left: 0 };
+const width = 1000;
+const height = 800;
 
 const svg = d3
   .select("#bubble")

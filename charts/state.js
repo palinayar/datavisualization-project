@@ -1,7 +1,7 @@
 import { createSunburstPlot } from "./sunburst.js";
 import { createBubblePlot } from "./sentimentCharts/SenBubbleChart.js";
 
-var currentFilter = "tags";
+var currentFilter = "title";
 var currentMonth = null;
 var currentCountry = null;
 var currentCategory = null;
@@ -29,11 +29,27 @@ function updateState(newFilter, month = null, country = null, category = null) {
 
   if (diffMap.currentFilter || diffMap.currentMonth) {
     // Only update sunburst plot if filter or month has changed
-    createSunburstPlot(currentFilter, currentMonth);
+    createSunburstPlot(
+      currentFilter,
+      currentMonth,
+      currentCountry,
+      currentCategory
+    );
+  }
+
+  if (diffMap.currentFilter) {
+    const allFilters = ["title", "description", "tags"];
+
+    allFilters.forEach((filter) => {
+      if (filter !== currentFilter) {
+        d3.select(`#${filter}Btn`).classed("active", false);
+      }
+    });
+
+    d3.select(`#${currentFilter}Btn`).classed("active", true);
   }
 
   // update text
-  d3.select("#filterType").text(currentFilter);
   d3.select("#layer").text(
     `${currentCountry ?? "All Countries"}/${currentCategory ?? "..."}`
   );
@@ -54,7 +70,7 @@ function updateFilterOnly(newFilter) {
 
 // Initialize with default state
 window.updateState = updateState;
-updateState("tags");
+updateState("title");
 
 window.updateFilterOnly = updateFilterOnly;
 
