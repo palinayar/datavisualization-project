@@ -1,3 +1,5 @@
+/// Heavily modified version of: https://observablehq.com/@d3/zoomable-sunburst
+
 import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
 import { filterByMonth } from "./sentimentCharts/SenBubbleChart.js";
 import { allCountryData } from "./dataLoader.js";
@@ -30,7 +32,7 @@ function getSentiment(row, prop = "title") {
   const neu = +row[prop + "_neu"];
   const pos = +row[prop + "_pos"];
 
-  const maxVal = Math.max(neg, neu, pos);
+  const maxVal = Math.max(neg, neu, pos); // Take the biggest one
 
   if (maxVal === neg) return "Negative";
   if (maxVal === pos) return "Positive";
@@ -57,9 +59,9 @@ function createSunburstPlot(
     const countryName = country.country;
     let rows = country.rows; // actual data
 
+    // If a specific month is selected, filter by it
     if (month) {
       rows = filterByMonth(rows, month);
-      console.log(month, rows.length);
     }
 
     // Group by category_name

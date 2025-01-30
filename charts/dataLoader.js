@@ -20,6 +20,21 @@ const files = [
     metadata_path: "./data/MX_category_id.json",
     country: "Mexico",
   },
+  {
+    path: "./data/sentiments_DEvideos.csv",
+    metadata_path: "./data/DE_category_id.json",
+    country: "Germany",
+  },
+  {
+    path: "./data/sentiments_FRvideos.csv",
+    metadata_path: "./data/FR_category_id.json",
+    country: "France",
+  },
+  {
+    path: "./data/sentiments_JPvideos.csv",
+    metadata_path: "./data/JP_category_id.json",
+    country: "Japan",
+  },
 ];
 
 // Loop through csv files -> add metadata -> and store in allCountryData array
