@@ -1,5 +1,5 @@
-import { createSunburstPlot } from "./sunburst.js";
-import { createBubblePlot } from "./sentimentCharts/SenBubbleChart.js";
+import { createSunburstPlot } from "../sunburst/sunburst.js";
+import { createBubblePlot } from "../sentimentCharts/SenBubbleChart.js";
 
 var currentFilter = "title";
 var currentMonth = null;

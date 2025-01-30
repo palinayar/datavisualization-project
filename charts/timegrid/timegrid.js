@@ -1,10 +1,10 @@
-import { allRows } from "../dataLoader.js";
+import { allRows } from "../helpers/dataLoader.js";
 import {
   currentCategory,
   currentCountry,
   currentFilter,
   currentMonth,
-} from "../state.js";
+} from "../helpers/state.js";
 
 function initTimeGrid() {
   let data = allRows;

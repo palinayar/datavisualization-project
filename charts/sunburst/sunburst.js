@@ -1,14 +1,14 @@
 /// Heavily modified version of: https://observablehq.com/@d3/zoomable-sunburst
 
 import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
-import { filterByMonth } from "./sentimentCharts/SenBubbleChart.js";
-import { allCountryData } from "./dataLoader.js";
+import { filterByMonth } from "../sentimentCharts/SenBubbleChart.js";
+import { allCountryData } from "../helpers/dataLoader.js";
 import {
   currentFilter,
   currentMonth,
   currentCountry,
   currentCategory,
-} from "./state.js";
+} from "../helpers/state.js";
 
 // Reduced dimensions so it’s not huge
 const width = 600;
