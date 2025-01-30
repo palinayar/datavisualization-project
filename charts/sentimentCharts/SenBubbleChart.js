@@ -64,7 +64,8 @@ async function createBubblePlot(filterType, month, country, category) {
   data.forEach((d) => {
     d.sentiment = +d[`${filterType}_pos`] - +d[`${filterType}_neg`]; // Sentiment score
     d.views = +d.views; // Views
-    d.engagement = +d.comment_count; // Engagement metric
+    //d.engagement = +d.comment_count; // Engagement metric
+    d.engagement = (+d.comment_count +(d.likes/10) +(d.dislikes/10));
     d.publish_time = new Date(d.publish_time); // Parse publish_time
   });
 
