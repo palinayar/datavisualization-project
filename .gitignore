@@ -169,3 +169,6 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+/sentiments_MXvideos.csv
+/sentiments_MXvideos_V1.csv

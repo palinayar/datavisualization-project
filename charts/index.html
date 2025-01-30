@@ -1,95 +1,186 @@
-
 <!-- run to see on localhost: npx http-server --no-cache -->
-
 
 <!DOCTYPE html>
 <html>
-    <head>
-        <link rel="stylesheet" href="index.css">
-        <title>Sentiment Analysis</title>
-    </head>
-    <style>
-        body {
-            font-family: sans-serif;
-            margin: 0;
-            padding: 0;
-        }
-        .chart {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            width: 100vw;
-        }
-        .chart-container {
-            display: flex;
-            justify-content: center; /* Horizontally center */
-            align-items: center; /* Vertically center */
-            width: 100%; /* Take full width of parent */
-        }
-        .tooltip {
-            position: absolute;
-            background-color: white;
-            border: 1px solid #ccc;
-            padding: 15px;
-            border-radius: 7px;
-            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
-            font-size: 14px;
-            z-index: 10;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-evenly;
-            align-items: center; 
-            text-align: center;
-            gap: 10px; /* Space between children */
-            height: auto; /* Adjust height dynamically */
-            width: 350px; /* Set fixed width */
-            word-wrap: break-word; /* Force wrapping on long text */
-            word-break: break-word; /* Optional for additional control */
-        }
-        
-        .tooltip-title {
-            font-weight: bold;
-            margin-bottom: 10px; /* Space below the title */
-        }
-        .video-title {
-            margin-top: 15px; /* Space above the video title */
-        }
-        .video-likes, .video-dislikes .video-category{
-            margin-top: 5px; /* Optional spacing between likes/dislikes */
-            font-size: small;
-        }
-        #donutChart {
-            display: block;
-            margin: 10px 0; /* Space around the donut chart */
-        }
-        .legend-item {
-            margin-top: 8px;
-        }
-        div button {
-            margin: 5px;
-        }
-    </style>
-    <body>
-        <div>
-            <button onclick="updateState('tags', 0)">Tags</button>
-            <button onclick="updateState('description', 0)">Description</button>
-            <button onclick="updateState('title', 0)">Title</button>
+  <head>
+    <link rel="stylesheet" href="index.css" />
+    <title>Sentiment Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+      integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+  </head>
+  <style type="text/tailwindcss">
+    @layer base {
+      button {
+        @apply bg-gray-500 text-white font-medium py-2 px-4 rounded transition-all;
+      }
+
+      button.active {
+        @apply bg-blue-700;
+      }
+
+      button:hover {
+        @apply opacity-80;
+      }
+
+      .card {
+        @apply bg-white shadow-sm rounded-lg;
+      }
+    }
+  </style>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+
+      background-color: #eaeaea;
+    }
+    .chart {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .chart-container {
+      display: flex;
+      /* Horizontally center */
+      justify-content: center;
+      /* Vertically center */
+      align-items: center;
+      width: fit-content;
+    }
+
+    .tooltip {
+      position: absolute;
+      background-color: white;
+      border: 1px solid #ccc;
+      padding: 15px;
+      border-radius: 7px;
+      box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+      font-size: 14px;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-evenly;
+      align-items: center;
+      text-align: center;
+      gap: 10px; /* Space between children */
+      height: auto; /* Adjust height dynamically */
+      width: 350px; /* Set fixed width */
+      word-wrap: break-word; /* Force wrapping on long text */
+      word-break: break-word; /* Optional for additional control */
+    }
+
+    .tooltip-title {
+      font-weight: bold;
+      margin-bottom: 10px; /* Space below the title */
+    }
+    .video-title {
+      margin-top: 15px; /* Space above the video title */
+    }
+    .video-likes,
+    .video-dislikes {
+      margin-top: 5px; /* Optional spacing between likes/dislikes */
+      font-size: small;
+    }
+    #donutChart {
+      display: block;
+      margin: 10px 0; /* Space around the donut chart */
+    }
+    .legend-item {
+      margin-top: 8px;
+    }
+    div button {
+      margin: 5px;
+    }
+    #controls {
+      display: inline-block;
+      vertical-align: top;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+
+    #resetButton {
+      background-color: #ff0000; /* Red background */
+      color: white; /* White text */
+      border: 1px solid #cc0000; /* Darker red border */
+      padding: 5px 10px;
+      cursor: pointer;
+      border-radius: 4px; /* Rounded corners */
+    }
+
+    #resetButton:hover {
+      background-color: #cc0000; /* Darker red background on hover */
+    }
+  </style>
+  <body>
+    <div
+      class="absolute right-0 bg-white/80 p-6 px-12 rounded-b border border-[1px] border-gray-300"
+    >
+      <h1 class="text-2xl font-bold">
+        YouTube Trending Videos
+        <br />Sentiment Analysis
+      </h1>
+      <div class="my-4">
+        <div class="flex items-center gap-x-1">
+          <i class="fa-solid fa-filter text-lg"></i> Filter sentiment on:
         </div>
-        <div>
-            <button onclick="updateState('description', 0)">Film & Animation</button>
-            <button onclick="updateState('description', 1)">Autos & Vehicles</button>
-            <button onclick="updateState('description', 2)">Music</button>
+        <button
+          id="titleBtn"
+          class="active"
+          onclick="window.updateFilterOnly('title')"
+        >
+          Title
+        </button>
+        <button
+          id="descriptionBtn"
+          onclick="window.updateFilterOnly('description')"
+        >
+          Description
+        </button>
+        <button id="tagsBtn" onclick="window.updateFilterOnly('tags')">
+          Tags
+        </button>
+      </div>
+      <div class="">
+        Layer: <span id="layer">All Countries</span><br />
+        Date Filter: <span id="dateFilter">...</span><br />
+      </div>
+    </div>
+
+    <div class="grid grid-cols-5 grid-rows-5 gap-6 p-6">
+      <div class="col-span-2 row-span-2">
+        <div class="card pt-[50px] pl-[50px] grid place-content-center">
+          <div id="controls">
+            <button id="resetButton">Reset</button>
+          </div>
+          <div id="timegrid" class=""></div>
         </div>
-        <div class="chart">
-            <svg id="bubble"></svg>
+      </div>
+      <div class="col-span-2 row-span-3 col-start-1 row-start-3">
+        <svg id="sunburstChart" class="card p-2 w-full"></svg>
+      </div>
+      <div class="col-span-3 row-span-5 col-start-3 row-start-1">
+        <div class="card p-4 h-full grid place-content-center">
+          <svg id="bubble" class=""></svg>
         </div>
-        <div id="tooltip" class="tooltip" style="display: none;">
-            <svg id="donutChart" width="150" height="150"></svg>
-        </div>
-        <script src="https://d3js.org/d3.v7.min.js"></script>
-        <script type="module" src="./sentimentCharts/SenBubbleChart.js"></script>
-    </body>
+      </div>
+    </div>
+
+    <div id="tooltip" class="tooltip" style="display: none">
+      <svg id="donutChart" width="150" height="150"></svg>
+    </div>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script type="module" src="./dataLoader.js"></script>
+    <script type="module" src="./state.js"></script>
+    <script type="module" src="./sentimentCharts/SenBubbleChart.js"></script>
+    <script type="module" src="./timegrid/timegrid.js"></script>
+    <script type="module" src="./sunburst.js"></script>
+  </body>
 </html>
-
-
