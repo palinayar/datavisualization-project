@@ -432,3 +432,12 @@ function createDayGrid(month) {
 }
 
 initTimeGrid();
+
+// Add event listener to the reset button
+document.getElementById("resetButton").addEventListener("click", () => {
+  // Reset the date filter
+  window.updateState(currentFilter, null, currentCountry, currentCategory);
+  
+  // Update the date filter display
+  document.getElementById("dateFilter").textContent = '...';
+});
