@@ -137,6 +137,8 @@ function initTimeGrid() {
     .attr("width", rectSize)
     .attr("height", rectSize)
     .attr("fill", (d) => colorScale(monthViews.get(months.indexOf(d))))
+    .attr("stroke", "black") // Add black border
+    .attr("stroke-width", 1) // Set border width
     .on("click", function (event, d) {
       createDayGrid(d);
 
@@ -152,13 +154,14 @@ function initTimeGrid() {
     .append("text")
     .attr("class", "month")
     .attr("x", (d, i) => (i % cols) * (rectSize + padding) + rectSize / 2)
-    .attr(
-      "y",
-      (d, i) => Math.floor(i / cols) * (rectSize + padding) + rectSize / 2 + 50
-    ) // Offset by 50 for legend
+    .attr("y",(d, i) => Math.floor(i / cols) * (rectSize + padding) + rectSize / 2 + 50) // Offset by 50 for legend
     .attr("dy", ".35em")
+    .attr("font-size", "32px")
     .attr("text-anchor", "middle")
     .attr("fill", "white")
+    .attr("font-weight", "bold")
+    .attr("stroke", "black") 
+    .attr("stroke-width", 0.7) 
     .text((d) => d);
 }
 
@@ -276,18 +279,15 @@ function createDayGrid(month) {
     .append("rect")
     .attr("class", "day")
     .attr("x", (d, i) => (i % cols) * (rectSize + padding) + 200)
-    .attr(
-      "y",
-      (d, i) => Math.floor(i / cols) * (rectSize + padding) + 150 + offset
-    )
+    .attr("y", (d, i) => Math.floor(i / cols) * (rectSize + padding) + 150 + offset)
     .attr("width", 0)
     .attr("height", 5000)
     .attr("fill", (d) => colorScale(dayViews.get(d)))
-    // Attach click handler immediately
+    .attr("stroke", "black")
+    .attr("stroke-width", 1)
     .on("click", function (event, d) {
       handleDayClick.call(this, event, d);
     })
-    // Then apply transition
     .transition()
     .duration(1000)
     .attr("x", (d, i) => (i % cols) * (rectSize + padding))
@@ -316,8 +316,12 @@ function createDayGrid(month) {
         offset
     )
     .attr("dy", ".35em")
+    .attr("font-size", "32px")
     .attr("text-anchor", "middle")
     .attr("fill", "white")
+    .attr("font-weight", "bold")
+    .attr("stroke", "black") 
+    .attr("stroke-width", 0.7) 
     .text((d) => d)
     .transition()
     .duration(1000)
@@ -385,7 +389,7 @@ function createDayGrid(month) {
     const [[x0, y0], [x1, y1]] = selection;
 
     // Clear existing borders
-    svg.selectAll("rect").attr("stroke", null).attr("stroke-width", null);
+    svg.selectAll("rect").attr("stroke", "black").attr("stroke-width", 1);
 
     // Filter squares fully within the brush area
     const selectedRect = svg
@@ -432,3 +436,12 @@ function createDayGrid(month) {
 }
 
 initTimeGrid();
+
+// Add event listener to the reset button
+document.getElementById("resetButton").addEventListener("click", () => {
+  // Reset the date filter
+  window.updateState(currentFilter, null, currentCountry, currentCategory);
+  
+  // Update the date filter display
+  document.getElementById("dateFilter").textContent = '...';
+});

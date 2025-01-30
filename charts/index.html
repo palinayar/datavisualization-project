@@ -99,6 +99,25 @@
     div button {
       margin: 5px;
     }
+    #controls {
+      display: inline-block;
+      vertical-align: top;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+
+    #resetButton {
+      background-color: #ff0000; /* Red background */
+      color: white; /* White text */
+      border: 1px solid #cc0000; /* Darker red border */
+      padding: 5px 10px;
+      cursor: pointer;
+      border-radius: 4px; /* Rounded corners */
+    }
+
+    #resetButton:hover {
+      background-color: #cc0000; /* Darker red background on hover */
+    }
   </style>
   <body>
     <div
@@ -138,6 +157,9 @@
     <div class="grid grid-cols-5 grid-rows-5 gap-6 p-6">
       <div class="col-span-2 row-span-2">
         <div class="card pt-[50px] pl-[50px] grid place-content-center">
+          <div id="controls">
+            <button id="resetButton">Reset</button>
+          </div>
           <div id="timegrid" class=""></div>
         </div>
       </div>
