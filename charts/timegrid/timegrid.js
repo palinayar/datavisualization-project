@@ -154,14 +154,17 @@ function initTimeGrid() {
     .append("text")
     .attr("class", "month")
     .attr("x", (d, i) => (i % cols) * (rectSize + padding) + rectSize / 2)
-    .attr("y",(d, i) => Math.floor(i / cols) * (rectSize + padding) + rectSize / 2 + 50) // Offset by 50 for legend
+    .attr(
+      "y",
+      (d, i) => Math.floor(i / cols) * (rectSize + padding) + rectSize / 2 + 50
+    ) // Offset by 50 for legend
     .attr("dy", ".35em")
     .attr("font-size", "32px")
     .attr("text-anchor", "middle")
     .attr("fill", "white")
     .attr("font-weight", "bold")
-    .attr("stroke", "black") 
-    .attr("stroke-width", 0.7) 
+    .attr("stroke", "black")
+    .attr("stroke-width", 0.7)
     .text((d) => d);
 }
 
@@ -279,7 +282,10 @@ function createDayGrid(month) {
     .append("rect")
     .attr("class", "day")
     .attr("x", (d, i) => (i % cols) * (rectSize + padding) + 200)
-    .attr("y", (d, i) => Math.floor(i / cols) * (rectSize + padding) + 150 + offset)
+    .attr(
+      "y",
+      (d, i) => Math.floor(i / cols) * (rectSize + padding) + 150 + offset
+    )
     .attr("width", 0)
     .attr("height", 5000)
     .attr("fill", (d) => colorScale(dayViews.get(d)))
@@ -320,8 +326,8 @@ function createDayGrid(month) {
     .attr("text-anchor", "middle")
     .attr("fill", "white")
     .attr("font-weight", "bold")
-    .attr("stroke", "black") 
-    .attr("stroke-width", 0.7) 
+    .attr("stroke", "black")
+    .attr("stroke-width", 0.7)
     .text((d) => d)
     .transition()
     .duration(1000)
@@ -417,10 +423,12 @@ function createDayGrid(month) {
       .attr("stroke", "black")
       .attr("stroke-width", 2);
 
-    const brushedDays = selectedRect.data();
+    let brushedDays = selectedRect.data();
 
     // Combine all brushed days into a string to pass along for the filters
     if (brushedDays.length > 0) {
+      // Only numbers
+      brushedDays = brushedDays.filter((d) => !isNaN(d));
       const joinedDays = brushedDays.join(",");
       window.updateState(
         currentFilter,
@@ -441,7 +449,7 @@ initTimeGrid();
 document.getElementById("resetButton").addEventListener("click", () => {
   // Reset the date filter
   window.updateState(currentFilter, null, currentCountry, currentCategory);
-  
+
   // Update the date filter display
-  document.getElementById("dateFilter").textContent = '...';
+  document.getElementById("dateFilter").textContent = "...";
 });
