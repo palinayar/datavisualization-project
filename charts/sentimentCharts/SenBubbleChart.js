@@ -1,6 +1,5 @@
 import { allRows } from "../helpers/dataLoader.js";
 import { currentFilter, currentMonth } from "../helpers/state.js";
-import { createSunburstPlot } from "../sunburst/sunburst.js";
 import { createDonutChart } from "./SenDonutChart.js";
 
 // Set up the SVG canvas dimensions
@@ -61,9 +60,8 @@ async function createBubblePlot(filterType, month, country, category) {
 
   // Format and parse the data based on the filter type
   data.forEach((d) => {
-    d.sentiment = +d[`${filterType}_pos`] - +d[`${filterType}_neg`]; // Sentiment score
-    d.views = +d.views; // Views
-    //d.engagement = +d.comment_count; // Engagement metric
+    d.sentiment = +d[`${filterType}_pos`] - +d[`${filterType}_neg`]; 
+    d.views = +d.views; 
     d.engagement = +d.comment_count + d.likes / 10 + d.dislikes / 10;
     d.publish_time = new Date(d.publish_time); // Parse publish_time
   });
@@ -204,15 +202,24 @@ async function createBubblePlot(filterType, month, country, category) {
         .attr("class", "video-category")
         .html(`<strong>Category:</strong> ${d.category_name}`);
 
+      // Ensure likes and dislikes are numbers and not undefined or null
+      const likes = d.likes ? Number(d.likes) : 0;
+      const dislikes = d.dislikes ? Number(d.dislikes) : 0;
+
+      const totalVotes = likes + dislikes;
+      const likePercentage = totalVotes > 0 ? (likes / totalVotes) * 100 : 0;
+      const dislikePercentage = totalVotes > 0 ? (dislikes / totalVotes) * 100 : 0;
+
       tooltip
         .append("div")
         .attr("class", "video-likes")
-        .html(`<strong>Likes:</strong> ${d.likes}`);
+        .html(`<strong>Likes:</strong> ${likes} (${likePercentage.toFixed(1)}%)`);
 
       tooltip
         .append("div")
         .attr("class", "video-dislikes")
-        .html(`<strong>Dislikes:</strong> ${d.dislikes}`);
+        .html(`<strong>Dislikes:</strong> ${dislikes} (${dislikePercentage.toFixed(1)}%)`);
+
 
       const sentimentData = [
         { label: "Positive", value: d[`${filterType}_pos`], color: "green" },
