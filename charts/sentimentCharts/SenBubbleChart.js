@@ -137,84 +137,98 @@ async function createBubblePlot(filterType, month, country, category) {
     .attr("fill", "steelblue")
     .attr("opacity", 0.8)
     .on("mouseover", function () {
-      d3.select(this).attr("fill", "orange");
+      d3.select(this)
+          .attr("fill", d => d.sentiment > 0.2 ? "green" : d.sentiment < -0.4 ? "red" : "orange")
+          .attr("opacity", 0.7);
     })
     .on("mouseout", function () {
-      if (this !== selectedBubble) {
-        d3.select(this).attr("fill", "steelblue");
-      }
+        if (this !== selectedBubble) {
+            d3.select(this)
+                .attr("fill", "steelblue")
+                .attr("opacity", 0.5);
+        }
     })
     .on("click", function (event, d) {
-      selectedBubble = this;
-      if (selectedBubble) {
-        d3.select(selectedBubble).attr("fill", "orange");
-      }
-      // Display the tooltip initially
-      tooltip.style("display", "block");
+        // If there is a previously selected bubble and it's not the same as the currently clicked bubble
+        if (selectedBubble && selectedBubble !== this) {
+            d3.select(selectedBubble)
+                .attr("fill", "steelblue") // Reset the previous bubble to blue
+                .attr("opacity", 0.5); // Reset the opacity of the previous bubble
+        }
+    
+        // Update the selectedBubble to the currently clicked bubble
+        selectedBubble = this;
+    
+        // Highlight the currently clicked bubble
+        d3.select(this)
+            .attr("fill", d => d.sentiment > 0.2 ? "green" : d.sentiment < -0.4 ? "red" : "orange") // Highlight based on sentiment
+            .attr("opacity", 0.9); // Make the clicked bubble stand out
+    
+        // Display the tooltip
+        tooltip.style("display", "block");
+    
+        // Clear previous tooltip content
+        tooltip.selectAll("*").remove();
+    
+        // Add content to the tooltip
+        tooltip.append("div")
+            .attr("class", "tooltip-title")
+            .html(`<strong>Sentiment scores for video ${filterType}</strong>`);
+    
+        tooltip.append("div")
+            .attr("class", "chart-container")
+            .style("display", "flex")
+            .style("justify-content", "center")
+            .style("align-items", "center")
+            .append("svg")
+            .attr("id", "donutChart")
+            .attr("width", 300)
+            .attr("height", 200);
+    
+        tooltip.append("div")
+            .attr("class", "video-title")
+            .html(`<strong>Title:</strong> ${d.title}`);
 
-      // Clear previous tooltip content
-      tooltip.selectAll("*").remove();
-
-      // Add content to the tooltip
-      tooltip
-        .append("div")
-        .attr("class", "tooltip-title")
-        .html(`<strong>Sentiment scores for video ${filterType}</strong>`);
-
-      tooltip
-        .append("div")
-        .attr("class", "chart-container")
-        .style("display", "flex")
-        .style("justify-content", "center")
-        .style("align-items", "center")
-        .append("svg")
-        .attr("id", "donutChart")
-        .attr("width", 300)
-        .attr("height", 200);
-
-      tooltip
-        .append("div")
-        .attr("class", "video-title")
-        .html(`<strong>Title:</strong> ${d.title}`);
-
-      tooltip
-        .append("div")
-        .attr("class", "video-likes")
-        .html(`<strong>Likes:</strong> ${d.likes}`);
-
-      tooltip
-        .append("div")
-        .attr("class", "video-dislikes")
-        .html(`<strong>Dislikes:</strong> ${d.dislikes}`);
-
-      const sentimentData = [
-        { label: "Positive", value: d[`${filterType}_pos`], color: "green" },
-        { label: "Neutral", value: d[`${filterType}_neu`], color: "orange" },
-        { label: "Negative", value: d[`${filterType}_neg`], color: "red" },
-      ];
-
-      createDonutChart("#donutChart", sentimentData);
-
-      // Get tooltip dimensions
-      const tooltipWidth = tooltip.node().offsetWidth;
-      const tooltipHeight = tooltip.node().offsetHeight;
-      const screenWidth = window.innerWidth;
-      const screenHeight = window.innerHeight;
-
-      // Calculate initial tooltip position
-      let left = event.pageX + 10;
-      let top = event.pageY + 10;
-
-      // Adjust position to fit within the viewport
-      if (left + tooltipWidth > screenWidth) {
-        left = event.pageX - tooltipWidth - 10; // Shift to the left
-      }
-      if (top + tooltipHeight > screenHeight) {
-        top = event.pageY - tooltipHeight - 10; // Shift above
-      }
-
-      // Apply adjusted position
-      tooltip.style("left", `${left}px`).style("top", `${top}px`);
+        tooltip.append("div")
+            .attr("class", "video-category")
+            .html(`<strong>Category:</strong> ${d.category_name}`);
+    
+        tooltip.append("div")
+            .attr("class", "video-likes")
+            .html(`<strong>Likes:</strong> ${d.likes}`);
+    
+        tooltip.append("div")
+            .attr("class", "video-dislikes")
+            .html(`<strong>Dislikes:</strong> ${d.dislikes}`);
+    
+        const sentimentData = [
+            { label: "Positive", value: d[`${filterType}_pos`], color: "green" },
+            { label: "Neutral", value: d[`${filterType}_neu`], color: "orange" },
+            { label: "Negative", value: d[`${filterType}_neg`], color: "red" },
+        ];
+    
+        createDonutChart("#donutChart", sentimentData);
+    
+        // Get tooltip dimensions
+        const tooltipWidth = tooltip.node().offsetWidth;
+        const tooltipHeight = tooltip.node().offsetHeight;
+        const screenWidth = window.innerWidth;
+        const screenHeight = window.innerHeight;
+    
+        // Calculate initial tooltip position
+        let left = event.pageX + 10;
+        let top = event.pageY + 10;
+    
+        // Adjust position to fit within the viewport
+        if (left + tooltipWidth > screenWidth) {
+            left = event.pageX - tooltipWidth - 10; // Shift to the left
+        }
+        if (top + tooltipHeight > screenHeight) {
+            top = event.pageY - tooltipHeight - 10; // Shift above
+        }
+    
+        // Apply adjusted position
+        tooltip.style("left", `${left}px`).style("top", `${top}px`);
     });
 
   // Hide tooltip when clicking outside
