@@ -23,29 +23,6 @@ const sizeScale = d3.scaleSqrt().range([2, 20]);
 // Create tooltip
 const tooltip = d3.select("#tooltip");
 
-// Define drag behavior for the Y-axis
-const dragYAxis = d3
-  .drag()
-  .on("drag", function (event) {
-    // Calculate the new position for the Y-axis
-    const newY = Math.max(0, Math.min(height, event.y)); // Keep within chart bounds
-    d3.select(this).attr(
-      "transform",
-      `translate(${xScale(0)}, ${newY - height})`
-    ); // Adjust position dynamically
-  })
-  .on("end", function (event) {
-    // Adjust the Y-scale domain based on drag end position
-    const newMaxY = yScale.invert(height - event.y); // Map pixel to data
-    yScale.domain([0, newMaxY]); // Update domain of Y-scale
-
-    // Redraw the Y-axis
-    svg.select(".y-axis").call(d3.axisLeft(yScale));
-
-    // Update bubble positions based on new Y-scale
-    svg.selectAll("circle").attr("cy", (d) => yScale(d.views));
-  });
-
 function filterByMonth(data, month) {
   const [selectedMonth, daysString] = month.split(" ");
   const monthIndex = new Date(
@@ -63,6 +40,20 @@ function filterByMonth(data, month) {
     // Filter by month only
     return data.filter((d) => d.publish_time.getMonth() === monthIndex);
   }
+}
+
+function resetBubbles() {
+  svg.selectAll("circle")
+      .attr("fill", "steelblue")
+      .attr("opacity", 0.6);
+}
+
+function setOtherBubblesOpacity(selectedBubble) {
+  svg.selectAll("circle")
+     .filter(function () {
+       return this !== selectedBubble;  // Select all bubbles except the one clicked
+     })
+     .attr("opacity", 0.3); 
 }
 
 // Bubble Plot Function
@@ -92,7 +83,7 @@ async function createBubblePlot(filterType, month, country, category) {
 
   // Update scales
   xScale.domain([-1, 1]); // Sentiment range from -1 to 1
-  yScale.domain([0, d3.max(data, (d) => d.views)]); // Views range from 0 to max views
+  yScale.domain([0, d3.max(data, (d) => d.views)]); 
   sizeScale.domain(d3.extent(data, (d) => d.engagement));
 
   // Clear old elements
@@ -101,7 +92,7 @@ async function createBubblePlot(filterType, month, country, category) {
   // Add X-axis
   svg
     .append("g")
-    .attr("transform", `translate(0, ${yScale(0)})`) // Position X-axis at y = 0
+    .attr("transform", `translate(0, ${yScale(0)})`) 
     .call(d3.axisBottom(xScale))
     .append("text")
     .attr("x", width / 2)
@@ -114,11 +105,11 @@ async function createBubblePlot(filterType, month, country, category) {
   svg
     .append("g")
     .attr("class", "y-axis")
-    .attr("transform", `translate(${xScale(0)}, 0)`) // Initial position
+    .attr("transform", `translate(${xScale(0)}, 0)`)
     .call(d3.axisLeft(yScale))
     .append("text")
-    .attr("x", 0) // Adjust for padding
-    .attr("y", -20) // Position above the axis
+    .attr("x", 0) 
+    .attr("y", -20) 
     .attr("fill", "black")
     .style("text-anchor", "middle")
     .text("Views");
@@ -135,25 +126,40 @@ async function createBubblePlot(filterType, month, country, category) {
     .attr("cy", (d) => yScale(d.views))
     .attr("r", (d) => sizeScale(d.engagement))
     .attr("fill", "steelblue")
-    .attr("opacity", 0.8)
+    .attr("opacity", 0.6)
     .on("mouseover", function () {
       d3.select(this)
-          .attr("fill", d => d.sentiment > 0.2 ? "green" : d.sentiment < -0.4 ? "red" : "orange")
-          .attr("opacity", 0.7);
+          .attr("fill", d => d.sentiment > 0.2 ? "green" : d.sentiment < -0.4 ? "red" : "orange");
     })
     .on("mouseout", function () {
-        if (this !== selectedBubble) {
-            d3.select(this)
+      if (this !== selectedBubble) {
+          if (selectedBubble) {
+              // Keep this bubble at 0.3 if a bubble is selected
+              d3.select(this)
                 .attr("fill", "steelblue")
-                .attr("opacity", 0.5);
-        }
+                .attr("opacity", 0.3);
+          } else {
+              // Reset to normal opacity if no bubble is selected
+              d3.select(this)
+                .attr("fill", "steelblue")
+                .attr("opacity", 0.6);
+          }
+      }
     })
     .on("click", function (event, d) {
-        // If there is a previously selected bubble and it's not the same as the currently clicked bubble
-        if (selectedBubble && selectedBubble !== this) {
+        if (selectedBubble === this) {
+          // Deselect bubble if clicked again
+          resetBubbles();
+          selectedBubble = null;
+          tooltip.style("display", "none");
+          return;
+        }
+    
+        // If there was a previously selected bubble
+        if (selectedBubble) {
             d3.select(selectedBubble)
-                .attr("fill", "steelblue") // Reset the previous bubble to blue
-                .attr("opacity", 0.5); // Reset the opacity of the previous bubble
+                .attr("fill", "steelblue")  // Reset previous bubble to blue
+                .attr("opacity", 0.6);      // Reset opacity to default
         }
     
         // Update the selectedBubble to the currently clicked bubble
@@ -161,10 +167,12 @@ async function createBubblePlot(filterType, month, country, category) {
     
         // Highlight the currently clicked bubble
         d3.select(this)
-            .attr("fill", d => d.sentiment > 0.2 ? "green" : d.sentiment < -0.4 ? "red" : "orange") // Highlight based on sentiment
-            .attr("opacity", 0.9); // Make the clicked bubble stand out
+            .attr("fill", d => d.sentiment > 0.2 ? "green" : d.sentiment < -0.4 ? "red" : "orange")
+            .attr("opacity", 0.9);  // Make the clicked bubble stand out
     
-        // Display the tooltip
+        // Set other bubbles to opacity 0.3
+        setOtherBubblesOpacity(this);
+    
         tooltip.style("display", "block");
     
         // Clear previous tooltip content
@@ -234,14 +242,11 @@ async function createBubblePlot(filterType, month, country, category) {
   // Hide tooltip when clicking outside
   d3.select("body").on("click", function (event) {
     if (!event.target.closest("circle") && !event.target.closest(".tooltip")) {
-      if (selectedBubble) {
-        d3.select(selectedBubble).attr("fill", "steelblue");
-        selectedBubble = null;
-      }
+      resetBubbles();
+      selectedBubble = null;
       tooltip.style("display", "none");
     }
   });
 }
-
 
 export { createBubblePlot, currentFilter, filterByMonth };
